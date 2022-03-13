@@ -1,15 +1,19 @@
 import os
 
 # Работа с изображениями
-import cv2
+import cv2  # type: ignore
+
 # Поиск точек
-import mediapipe as mp
+import mediapipe as mp  # type: ignore
+
 # Вычисления матриц
 import numpy as np
-# Сохранение и загрузка файлов
-from joblib import dump, load
 
-# Константы в программе
+# Сохранение и загрузка файлов
+from joblib import dump, load  # type: ignore
+
+
+# Constants
 
 # Наши классы
 LABELS = {
@@ -44,7 +48,6 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_pose = mp.solutions.pose
 
-
 IMAGE_FILES = []
 
 # Точки на изображении
@@ -58,8 +61,6 @@ for gesture in os.listdir(DATASET_DIR):
         IMAGE_FILES.append((gesture, os.path.join(DATASET_DIR, gesture), file))
 
 BG_COLOR = (192, 192, 192)  # gray
-
-
 
 with mp_pose.Pose(
         static_image_mode=True,
@@ -75,9 +76,9 @@ with mp_pose.Pose(
 
         # TODO: Здесь можно аугментировать изображение
 
-        images = augmented_images()
+        # images = augmented_images()
 
-        for image in images:
+        for image in [image]:
 
             # Convert the BGR image to RGB before processing.
             # Запуск модели на картинку
@@ -89,7 +90,7 @@ with mp_pose.Pose(
 
             # Записываем все точки в один лист
             person = []
-            for point in results.pose_landmarks.landmark:
+            for i, point in enumerate(results.pose_landmarks.landmark):
                 person.append([point.x,
                                point.y,
                                point.z,
@@ -100,7 +101,6 @@ with mp_pose.Pose(
             y_train.append(LABELS_R[gesture])
 
             print(f'{file}')
-
 
             # Рисуем аннотации на изображении
             annotated_image = image.copy()
