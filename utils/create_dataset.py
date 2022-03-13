@@ -68,56 +68,60 @@ with mp_pose.Pose(
         min_detection_confidence=0.5) as pose:
     # Итерируемся по каждому изображению в датасете
     for gesture, directory, file in IMAGE_FILES:
-
-
         # считываем изображение
         file_path = os.path.join(directory, file)
         image = cv2.imread(os.path.join(directory, file))
         image_height, image_width, _ = image.shape
 
-        # Convert the BGR image to RGB before processing.
-        # Запуск модели на картинку
-        results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        # TODO: Здесь можно аугментировать изображение
 
-        # Если нет точек, то пропускаем изображение
-        if not results.pose_landmarks:
-            continue
+        images = augmented_images()
 
-        # Записываем все точки в один лист
-        person = []
-        for point in results.pose_landmarks.landmark:
-            person.append([point.x,
-                           point.y,
-                           point.z,
-                           point.visibility])
+        for image in images:
 
-        # Записываем проработанное изображение в список
-        x_train.append(person)
-        y_train.append(LABELS_R[gesture])
+            # Convert the BGR image to RGB before processing.
+            # Запуск модели на картинку
+            results = pose.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
-        print(f'{file}')
+            # Если нет точек, то пропускаем изображение
+            if not results.pose_landmarks:
+                continue
+
+            # Записываем все точки в один лист
+            person = []
+            for point in results.pose_landmarks.landmark:
+                person.append([point.x,
+                               point.y,
+                               point.z,
+                               point.visibility])
+
+            # Записываем проработанное изображение в список
+            x_train.append(person)
+            y_train.append(LABELS_R[gesture])
+
+            print(f'{file}')
 
 
-        # Рисуем аннотации на изображении
-        annotated_image = image.copy()
-        # Draw segmentation on the image.
-        # To improve segmentation around boundaries, consider applying a joint
-        # bilateral filter to "results.segmentation_mask" with "image".
-        # condition = np.stack((results.segmentation_mask,) * 3, axis=-1) > 0.1
-        # bg_image = np.zeros(image.shape, dtype=np.uint8)
-        # bg_image[:] = BG_COLOR
-        # annotated_image = np.where(condition, annotated_image, bg_image)
-        # Draw pose landmarks on the image.
-        mp_drawing.draw_landmarks(
-            annotated_image,
-            results.pose_landmarks,
-            mp_pose.POSE_CONNECTIONS,
-            landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
+            # Рисуем аннотации на изображении
+            annotated_image = image.copy()
+            # Draw segmentation on the image.
+            # To improve segmentation around boundaries, consider applying a joint
+            # bilateral filter to "results.segmentation_mask" with "image".
+            # condition = np.stack((results.segmentation_mask,) * 3, axis=-1) > 0.1
+            # bg_image = np.zeros(image.shape, dtype=np.uint8)
+            # bg_image[:] = BG_COLOR
+            # annotated_image = np.where(condition, annotated_image, bg_image)
+            # Draw pose landmarks on the image.
+            mp_drawing.draw_landmarks(
+                annotated_image,
+                results.pose_landmarks,
+                mp_pose.POSE_CONNECTIONS,
+                landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
-        # cv2.imwrite(os.path.join(annotated_dir, gesture, file + '.png'), annotated_image)
-        # Plot pose world landmarks.
-        # mp_drawing.plot_landmarks(
-        #     results.pose_world_landmarks, mp_pose.POSE_CONNECTIONS)
+            # cv2.imwrite(os.path.join(annotated_dir, gesture, file + '.png'), annotated_image)
+            # Plot pose world landmarks.
+            # mp_drawing.plot_landmarks(
+            #     results.pose_world_landmarks, mp_pose.POSE_CONNECTIONS)
 
     # Сохраняем на диск наши тренировочные данные
     np.save('../data/data.npy', x_train)
